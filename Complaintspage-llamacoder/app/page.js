@@ -17,7 +17,7 @@ import { useComplaints } from "@/utils/useComplaints";
 
 import StatsCard from "@/components/StatsCard";
 import ComplaintCard from "@/components/ComplaintCard";
-import ComplaintDetailsModal from "@/components/ComplaintDetailsModal";
+import ComplaintDetailsModal from "@/components/ComplaintDetailModal";
 import AddComplaintModal from "@/components/AddComplaintModal";
 import ConfirmModal from "@/components/ConfirmModal";
 import NextDayModal from "@/components/NextDayModal";
