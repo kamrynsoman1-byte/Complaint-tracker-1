@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from 'react';
 import {
   Briefcase,
   Plus,
@@ -11,18 +11,16 @@ import {
   AlertTriangle,
   CheckCircle,
   HelpCircle,
-} from "lucide-react";
+} from 'lucide-react';
+import { useComplaints } from '@/utils/useComplaints';
+import { StatsCard } from '@/components/StatsCard';
+import { ComplaintCard } from '@/components/ComplaintCard';
+import { ComplaintDetailsModal } from '@/components/AddComplaintModal';
+import { AddComplaintModal } from '@/components/AddComplaintModal';
+import { ConfirmModal } from '@/components/ConfirmModal';
+import { NextDayModal } from '@/components/NextDayModal';
+import { getDayCategory } from '@/utils/helpers';
 
-import { useComplaints } from "@/utils/useComplaints";
-
-import StatsCard from "@/components/StatsCard";
-import ComplaintCard from "@/components/ComplaintCard";
-import ComplaintDetailsModal from "@/components/ComplaintDetailModal";
-import AddComplaintModal from "@/components/AddComplaintModal";
-import ConfirmModal from "@/components/ConfirmModal";
-import NextDayModal from "@/components/NextDayModal";
-
-import { getDayCategory } from "@/utils/helpers";
 const DEMO_SEEN_KEY = 'complaints_demo_seen';
 
 export default function ComplaintsPage() {
