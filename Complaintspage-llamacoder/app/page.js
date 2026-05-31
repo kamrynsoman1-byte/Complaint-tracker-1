@@ -1,4 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
+'use client';
+
+import { useState, useEffect, useMemo } from 'react';
 import {
   Briefcase,
   Plus,
@@ -10,16 +12,14 @@ import {
   CheckCircle,
   HelpCircle,
 } from 'lucide-react';
-import { useComplaints } from '../utils/useComplaints';
-import { Complaint, ConfirmAction } from '../types/complaints';
-import { StatsCard } from '../components/StatsCard';
-import { ComplaintCard } from '../components/ComplaintCard';
-import { ComplaintDetailsModal } from '../components/ComplaintDetailsModal';
-import { AddComplaintModal } from '../components/AddComplaintModal';
-import { ConfirmModal } from '../components/ConfirmModal';
-import { NextDayModal } from '../components/NextDayModal';
-import { DemoModal } from '../components/DemoModal';
-import { getDayCategory } from '../utils/helpers';
+import { useComplaints } from '@/utils/useComplaints';
+import { StatsCard } from '@/components/StatsCard';
+import { ComplaintCard } from '@/components/ComplaintCard';
+import { ComplaintDetailsModal } from '@/components/ComplaintDetailsModal';
+import { AddComplaintModal } from '@/components/AddComplaintModal';
+import { ConfirmModal } from '@/components/ConfirmModal';
+import { NextDayModal } from '@/components/NextDayModal';
+import { getDayCategory } from '@/utils/helpers';
 
 const DEMO_SEEN_KEY = 'complaints_demo_seen';
 
@@ -41,16 +41,15 @@ export default function ComplaintsPage() {
     setLoading,
   } = useComplaints();
 
-  const [currentPage, setCurrentPage] = useState<'backlog' | 'closed'>('backlog');
+  const [currentPage, setCurrentPage] = useState('backlog');
   const [search, setSearch] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [viewComplaint, setViewComplaint] = useState<Complaint | null>(null);
-  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
-  const [showNextDayModal, setShowNextDayModal] = useState<{ targetId: string } | null>(null);
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const [viewComplaint, setViewComplaint] = useState(null);
+  const [confirmAction, setConfirmAction] = useState(null);
+  const [showNextDayModal, setShowNextDayModal] = useState(null);
+  const [validationError, setValidationError] = useState(null);
   const [showDemo, setShowDemo] = useState(false);
 
-  // Show demo on first visit
   useEffect(() => {
     const hasSeenDemo = localStorage.getItem(DEMO_SEEN_KEY);
     if (!hasSeenDemo) {
@@ -63,14 +62,13 @@ export default function ComplaintsPage() {
     setShowDemo(false);
   };
 
-  // Filter and sort complaints
   const filteredBacklogComplaints = useMemo(() => {
-    let result = backlogComplaints;
+    let result = [...backlogComplaints];
 
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(
-        c =>
+        (c) =>
           c.complaint_number.toLowerCase().includes(q) ||
           c.description.toLowerCase().includes(q) ||
           c.update_notes.toLowerCase().includes(q)
@@ -88,24 +86,32 @@ export default function ComplaintsPage() {
   }, [backlogComplaints, search]);
 
   const filteredClosedComplaints = useMemo(() => {
-    let result = closedComplaints;
+    let result = [...closedComplaints];
     if (search.trim()) {
       const q = search.toLowerCase();
-      result = result.filter(c => c.complaint_number.toLowerCase().includes(q) || c.description.toLowerCase().includes(q));
+      result = result.filter(
+        (c) =>
+          c.complaint_number.toLowerCase().includes(q) ||
+          c.description.toLowerCase().includes(q)
+      );
     }
+    result.sort((a, b) => {
+      const dateA = new Date(a.closed_at || a.escalated_at || a.date_added);
+      const dateB = new Date(b.closed_at || b.escalated_at || b.date_added);
+      return dateB - dateA;
+    });
     return result;
   }, [closedComplaints, search]);
 
-  // Group complaints by day category (Today, Tomorrow, Future)
   const groupedComplaints = useMemo(() => {
-    const groups: Record<'today' | 'tomorrow' | 'future' | 'past', Complaint[]> = {
+    const groups = {
       today: [],
       tomorrow: [],
       future: [],
       past: [],
     };
 
-    filteredBacklogComplaints.forEach(complaint => {
+    filteredBacklogComplaints.forEach((complaint) => {
       const category = getDayCategory(complaint.next_callback_date);
       groups[category].push(complaint);
     });
@@ -113,16 +119,13 @@ export default function ComplaintsPage() {
     return groups;
   }, [filteredBacklogComplaints]);
 
-  // Helper to check if update notes are filled
-  const hasUpdateNotes = (complaintId: string): boolean => {
-    const complaint = complaints.find(c => c.id === complaintId);
+  const hasUpdateNotes = (complaintId) => {
+    const complaint = complaints.find((c) => c.id === complaintId);
     return !!complaint?.update_notes?.trim();
   };
 
-  // Wrapper for actions that require update notes
-  const withUpdateNotesCheck = (action: ConfirmAction): boolean => {
-    if (action.type === 'delete') return true; // Delete doesn't require notes
-    
+  const withUpdateNotesCheck = (action) => {
+    if (action.type === 'delete') return true;
     if (!hasUpdateNotes(action.targetId)) {
       setValidationError('Please fill in the Update Notes before performing this action.');
       return false;
@@ -146,12 +149,14 @@ export default function ComplaintsPage() {
       case 'delete':
         deleteComplaint(confirmAction.targetId);
         break;
+      default:
+        break;
     }
     setConfirmAction(null);
     setViewComplaint(null);
   };
 
-  const handleAdvanceDayRequest = (targetId: string) => {
+  const handleAdvanceDayRequest = (targetId) => {
     if (!hasUpdateNotes(targetId)) {
       setValidationError('Please fill in the Update Notes before advancing to the next day.');
       return;
@@ -159,7 +164,7 @@ export default function ComplaintsPage() {
     setShowNextDayModal({ targetId });
   };
 
-  const handleAdvanceDayConfirm = (targetId: string, callbackDate: string, callbackTime: string) => {
+  const handleAdvanceDayConfirm = (targetId, callbackDate, callbackTime) => {
     advanceDay(targetId, callbackDate, callbackTime);
     setShowNextDayModal(null);
     setViewComplaint(null);
@@ -246,7 +251,9 @@ export default function ComplaintsPage() {
           <button
             onClick={() => setCurrentPage('backlog')}
             className={`px-6 py-3 rounded-xl font-medium transition-all flex items-center gap-2 ${
-              currentPage === 'backlog' ? 'bg-teal-600 text-white shadow-lg' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+              currentPage === 'backlog'
+                ? 'bg-teal-600 text-white shadow-lg'
+                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
             }`}
           >
             <Layers className="w-5 h-5" />
@@ -255,7 +262,9 @@ export default function ComplaintsPage() {
           <button
             onClick={() => setCurrentPage('closed')}
             className={`px-6 py-3 rounded-xl font-medium transition-all flex items-center gap-2 ${
-              currentPage === 'closed' ? 'bg-teal-600 text-white shadow-lg' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+              currentPage === 'closed'
+                ? 'bg-teal-600 text-white shadow-lg'
+                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
             }`}
           >
             <Archive className="w-5 h-5" />
@@ -298,7 +307,6 @@ export default function ComplaintsPage() {
           <div className="space-y-6">
             {currentPage === 'backlog' ? (
               <>
-                {/* Today's complaints */}
                 {groupedComplaints.today.length > 0 && (
                   <div>
                     <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
@@ -306,7 +314,7 @@ export default function ComplaintsPage() {
                       Today
                     </h3>
                     <div className="space-y-3">
-                      {groupedComplaints.today.map(complaint => (
+                      {groupedComplaints.today.map((complaint) => (
                         <ComplaintCard
                           key={complaint.id}
                           complaint={complaint}
@@ -325,7 +333,6 @@ export default function ComplaintsPage() {
                   </div>
                 )}
 
-                {/* Tomorrow's complaints */}
                 {groupedComplaints.tomorrow.length > 0 && (
                   <div>
                     <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
@@ -333,7 +340,7 @@ export default function ComplaintsPage() {
                       Tomorrow
                     </h3>
                     <div className="space-y-3">
-                      {groupedComplaints.tomorrow.map(complaint => (
+                      {groupedComplaints.tomorrow.map((complaint) => (
                         <ComplaintCard
                           key={complaint.id}
                           complaint={complaint}
@@ -352,7 +359,6 @@ export default function ComplaintsPage() {
                   </div>
                 )}
 
-                {/* Future complaints */}
                 {groupedComplaints.future.length > 0 && (
                   <div>
                     <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
@@ -360,7 +366,7 @@ export default function ComplaintsPage() {
                       Future
                     </h3>
                     <div className="space-y-3">
-                      {groupedComplaints.future.map(complaint => (
+                      {groupedComplaints.future.map((complaint) => (
                         <ComplaintCard
                           key={complaint.id}
                           complaint={complaint}
@@ -379,7 +385,6 @@ export default function ComplaintsPage() {
                   </div>
                 )}
 
-                {/* Past/No callback date complaints */}
                 {groupedComplaints.past.length > 0 && (
                   <div>
                     <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
@@ -387,7 +392,7 @@ export default function ComplaintsPage() {
                       No Callback Scheduled
                     </h3>
                     <div className="space-y-3">
-                      {groupedComplaints.past.map(complaint => (
+                      {groupedComplaints.past.map((complaint) => (
                         <ComplaintCard
                           key={complaint.id}
                           complaint={complaint}
@@ -407,9 +412,8 @@ export default function ComplaintsPage() {
                 )}
               </>
             ) : (
-              // Closed/Escalated complaints
               <div className="space-y-3">
-                {filteredClosedComplaints.map(complaint => (
+                {filteredClosedComplaints.map((complaint) => (
                   <ComplaintCard
                     key={complaint.id}
                     complaint={complaint}
@@ -466,7 +470,9 @@ export default function ComplaintsPage() {
       {/* Next Day Modal */}
       {showNextDayModal && (
         <NextDayModal
-          onConfirm={(date, time) => handleAdvanceDayConfirm(showNextDayModal.targetId, date, time)}
+          onConfirm={(date, time) =>
+            handleAdvanceDayConfirm(showNextDayModal.targetId, date, time)
+          }
           onCancel={() => setShowNextDayModal(null)}
         />
       )}
@@ -490,7 +496,34 @@ export default function ComplaintsPage() {
 
       {/* Demo Modal */}
       {showDemo && (
-        <DemoModal onClose={handleCloseDemo} />
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-800 rounded-2xl max-w-md w-full p-6 border border-slate-700 shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-teal-600 p-2 rounded-lg">
+                <HelpCircle className="w-6 h-6 text-white" />
+              </div>
+              <h2 className="text-xl font-semibold text-white">Welcome to Complaints System</h2>
+            </div>
+            <div className="space-y-3 text-slate-300 text-sm mb-6">
+              <p>This is an enterprise-grade case management system for tracking customer complaints.</p>
+              <div className="bg-slate-700/50 rounded-lg p-3">
+                <p className="font-medium text-white mb-2">Quick Start:</p>
+                <ul className="space-y-1 text-slate-400">
+                  <li>• Click "New Complaint" to add a case</li>
+                  <li>• Click "View Details" for full information</li>
+                  <li>• Update notes before advancing days</li>
+                  <li>• Level 4-5 complaints are prioritized</li>
+                </ul>
+              </div>
+            </div>
+            <button
+              onClick={handleCloseDemo}
+              className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium transition-colors"
+            >
+              Get Started
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

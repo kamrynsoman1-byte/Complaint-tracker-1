@@ -1,0 +1,26 @@
+complaints-tracker/
+├── app/
+│   ├── layout.tsx
+│   ├── page.tsx
+│   └── globals.css
+├── components/
+│   ├── AddComplaintModal.tsx
+│   ├── ComplaintCard.tsx
+│   ├── ComplaintDetailsModal.tsx
+│   ├── ConfirmModal.tsx
+│   ├── NextDayModal.tsx
+│   └── StatsCard.tsx
+├── utils/
+│   ├── constants.ts
+│   ├── helpers.ts
+│   └── useComplaints.ts
+├── types/
+│   └── index.ts
+├── public/
+│   └── favicon.ico
+├── package.json
+├── next.config.mjs
+├── tsconfig.json
+├── tailwind.config.js
+├── postcss.config.js
+└── .gitignore
